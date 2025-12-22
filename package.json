@@ -1,0 +1,15 @@
+{
+  "name": "rustyboi-visualizer-web",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "rustyboi_visualizer_web_bg.wasm",
+    "rustyboi_visualizer_web.js",
+    "rustyboi_visualizer_web.d.ts"
+  ],
+  "main": "rustyboi_visualizer_web.js",
+  "types": "rustyboi_visualizer_web.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
