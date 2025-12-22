@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RustyBoi Web Emulator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            margin: 0 0 20px 0;
+            color: #4a9eff;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        #gameboy-canvas {
+            border: 4px solid #333;
+            border-radius: 8px;
+            background: #000;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4a9eff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background: #3a8eef;
+        }
+        
+        .status {
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            min-width: 300px;
+            text-align: center;
+        }
+        
+        .status.loaded {
+            background: #2a5a2a;
+        }
+        
+        .keyboard-hints {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            max-width: 600px;
+        }
+        
+        .keyboard-hints h3 {
+            margin-top: 0;
+            color: #4a9eff;
+        }
+        
+        .keyboard-hints ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .keyboard-hints li {
+            padding: 5px 0;
+        }
+        
+        .key {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #444;
+            border-radius: 3px;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>RustyBoi Web Emulator</h1>
+    
+    <div class="container">
+        <canvas id="gameboy-canvas"></canvas>
+        
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <label for="rom-input" class="file-input-label">
+                    Load ROM File
+                </label>
+                <input type="file" id="rom-input" accept=".gb,.gbc" />
+            </div>
+            
+            <div id="status" class="status">
+                No ROM loaded. Click "Load ROM File" to start.
+            </div>
+        </div>
+        
+        <div class="keyboard-hints">
+            <h3>Keyboard Controls</h3>
+            <ul>
+                <li><span class="key">Arrow Keys</span> or <span class="key">WASD</span> - Directional pad</li>
+                <li><span class="key">Z</span> or <span class="key">J</span> - A button</li>
+                <li><span class="key">X</span> or <span class="key">K</span> - B button</li>
+                <li><span class="key">Shift</span> or <span class="key">Backspace</span> - Select</li>
+                <li><span class="key">Enter</span> or <span class="key">Space</span> - Start</li>
+                <li><span class="key">P</span> - Pause/Resume</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script type="module">
+        import init, { WebApp } from './pkg/rustyboi_visualizer_web.js';
+        
+        let app = null;
+        let animationFrameId = null;
+        let isPaused = false;
+        
+        // Button mapping: 0=Right, 1=Left, 2=Up, 3=Down, 4=A, 5=B, 6=Select, 7=Start
+        const buttonMap = new Map();
+        
+        // Initialize button states
+        function initButtonMap() {
+            buttonMap.clear();
+            // Right
+            buttonMap.set('ArrowRight', 0);
+            buttonMap.set('d', 0);
+            buttonMap.set('D', 0);
+            // Left
+            buttonMap.set('ArrowLeft', 1);
+            buttonMap.set('a', 1);
+            buttonMap.set('A', 1);
+            // Up
+            buttonMap.set('ArrowUp', 2);
+            buttonMap.set('w', 2);
+            buttonMap.set('W', 2);
+            // Down
+            buttonMap.set('ArrowDown', 3);
+            buttonMap.set('s', 3);
+            buttonMap.set('S', 3);
+            // A
+            buttonMap.set('z', 4);
+            buttonMap.set('Z', 4);
+            buttonMap.set('j', 4);
+            buttonMap.set('J', 4);
+            // B
+            buttonMap.set('x', 5);
+            buttonMap.set('X', 5);
+            buttonMap.set('k', 5);
+            buttonMap.set('K', 5);
+            // Select
+            buttonMap.set('Shift', 6);
+            buttonMap.set('Backspace', 6);
+            // Start
+            buttonMap.set('Enter', 7);
+            buttonMap.set(' ', 7);
+        }
+        
+        // Initialize the app
+        async function initApp() {
+            try {
+                await init();
+                app = new WebApp("gameboy-canvas");
+                updateStatus("Ready. Load a ROM file to start.", false);
+                initButtonMap();
+                setupEventListeners();
+                startGameLoop();
+            } catch (error) {
+                console.error("Failed to initialize:", error);
+                updateStatus("Failed to initialize. Check console for errors.", false);
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // File input
+            const fileInput = document.getElementById("rom-input");
+            fileInput.addEventListener("change", handleFileLoad);
+            
+            // Keyboard input
+            document.addEventListener("keydown", handleKeyDown);
+            document.addEventListener("keyup", handleKeyUp);
+            
+            // Prevent default behavior for game keys
+            document.addEventListener("keydown", (e) => {
+                if (buttonMap.has(e.key) || e.key === 'p' || e.key === 'P') {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Handle file loading
+        async function handleFileLoad(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                updateStatus("Loading ROM...", false);
+                const arrayBuffer = await file.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                
+                app.load_rom(uint8Array);
+                updateStatus(`Loaded: ${file.name}`, true);
+            } catch (error) {
+                console.error("Failed to load ROM:", error);
+                updateStatus("Failed to load ROM. Check console for errors.", false);
+            }
+        }
+        
+        // Handle keyboard input
+        function handleKeyDown(event) {
+            if (!app || !app.is_loaded()) return;
+            
+            // Pause toggle
+            if (event.key === 'p' || event.key === 'P') {
+                isPaused = !isPaused;
+                updateStatus(isPaused ? "Paused" : "Running", true);
+                return;
+            }
+            
+            // Game buttons
+            const button = buttonMap.get(event.key);
+            if (button !== undefined) {
+                app.set_button(button, true);
+            }
+        }
+        
+        function handleKeyUp(event) {
+            if (!app || !app.is_loaded()) return;
+            
+            const button = buttonMap.get(event.key);
+            if (button !== undefined) {
+                app.set_button(button, false);
+            }
+        }
+        
+        // Update status display
+        function updateStatus(message, loaded) {
+            const statusEl = document.getElementById("status");
+            statusEl.textContent = message;
+            statusEl.className = loaded ? "status loaded" : "status";
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (app && app.is_loaded() && !isPaused) {
+                app.run_frame();
+            }
+            
+            if (app) {
+                app.draw();
+            }
+            
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+        
+        function startGameLoop() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            gameLoop();
+        }
+        
+        // Initialize on page load
+        initApp();
+    </script>
+</body>
+</html>
+
+
