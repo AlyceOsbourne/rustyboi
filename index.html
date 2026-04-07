@@ -10,28 +10,24 @@
 
 body {
     margin: 0;
-    padding: 10px 0;
+    padding: 0;
     font-family: "MS Sans Serif", Tahoma, sans-serif;
     background: #C0C0C0;
     color: #000;
     font-size: 13px;
-    display: flex;
-    justify-content: center;
 }
 
-/* Centered content area */
-.app {
-    width: 360px;
-}
-
-/* ===== MENU BAR ===== */
+/* ===== FULL-WIDTH MENU BAR ===== */
 .menu-bar {
+    width: 100%;
     display: flex;
     gap: 2px;
-    padding: 2px;
-    border: 2px outset #fff;
+    padding: 2px 4px;
+    border-bottom: 2px solid #808080;
+    border-top: 2px solid #fff;
+    border-left: 2px solid #fff;
+    border-right: 2px solid #808080;
     background: #C0C0C0;
-    margin-bottom: 6px;
 }
 
 .menu-item {
@@ -75,6 +71,17 @@ body {
     background: #808080;
 }
 
+/* ===== CENTERED CONTENT ===== */
+.wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.app {
+    width: 360px;
+}
+
 /* ===== CONTENT ===== */
 
 .header {
@@ -97,7 +104,6 @@ h1 {
     gap: 6px;
 }
 
-/* Center canvas panel */
 .canvas-wrapper {
     padding: 6px;
     border: 2px inset #fff;
@@ -111,14 +117,12 @@ h1 {
     image-rendering: pixelated;
 }
 
-/* Status */
 .status {
     padding: 4px 6px;
     border: 2px inset #fff;
     text-align: center;
 }
 
-/* Keyboard hints */
 .keyboard-hints {
     padding: 6px;
     border: 2px inset #fff;
@@ -139,21 +143,22 @@ h1 {
 
 <body>
 
-<div class="app">
-
-    <!-- MENU BAR -->
-    <div class="menu-bar">
-        <div class="menu-item">
-            File
-            <div class="dropdown">
-                <div class="dropdown-item" id="menu-load">Load ROM...</div>
-                <div class="dropdown-item" id="menu-reset">Reset</div>
-                <div class="dropdown-item" id="menu-pause">Pause / Resume</div>
-                <div class="dropdown-separator"></div>
-                <div class="dropdown-item" id="menu-clear">Clear</div>
-            </div>
+<!-- FULL WIDTH MENU -->
+<div class="menu-bar">
+    <div class="menu-item">
+        File
+        <div class="dropdown">
+            <div class="dropdown-item" id="menu-load">Load ROM...</div>
+            <div class="dropdown-item" id="menu-reset">Reset</div>
+            <div class="dropdown-item" id="menu-pause">Pause / Resume</div>
+            <div class="dropdown-separator"></div>
+            <div class="dropdown-item" id="menu-clear">Clear</div>
         </div>
     </div>
+</div>
+
+<div class="wrapper">
+<div class="app">
 
     <div class="header">
         <h1>RustyBoi Emulator</h1>
@@ -179,6 +184,7 @@ h1 {
         </div>
     </div>
 
+</div>
 </div>
 
 <input type="file" id="rom-input" accept=".gb,.gbc" style="display:none">
