@@ -10,11 +10,18 @@
 
 body {
     margin: 0;
-    padding: 4px;
+    padding: 10px 0;
     font-family: "MS Sans Serif", Tahoma, sans-serif;
     background: #C0C0C0;
     color: #000;
     font-size: 13px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Centered content area */
+.app {
+    width: 360px;
 }
 
 /* ===== MENU BAR ===== */
@@ -55,7 +62,6 @@ body {
 
 .dropdown-item {
     padding: 4px 10px;
-    white-space: nowrap;
 }
 
 .dropdown-item:hover {
@@ -91,10 +97,12 @@ h1 {
     gap: 6px;
 }
 
+/* Center canvas panel */
 .canvas-wrapper {
     padding: 6px;
     border: 2px inset #fff;
-    width: fit-content;
+    display: flex;
+    justify-content: center;
 }
 
 #gameboy-canvas {
@@ -103,14 +111,21 @@ h1 {
     image-rendering: pixelated;
 }
 
+/* Status */
 .status {
     padding: 4px 6px;
     border: 2px inset #fff;
+    text-align: center;
 }
 
+/* Keyboard hints */
 .keyboard-hints {
     padding: 6px;
     border: 2px inset #fff;
+}
+
+.keyboard-hints div {
+    margin-bottom: 4px;
 }
 
 .key {
@@ -124,45 +139,48 @@ h1 {
 
 <body>
 
-<!-- MENU BAR -->
-<div class="menu-bar">
-    <div class="menu-item">
-        File
-        <div class="dropdown">
-            <div class="dropdown-item" id="menu-load">Load ROM...</div>
-            <div class="dropdown-item" id="menu-reset">Reset</div>
-            <div class="dropdown-item" id="menu-pause">Pause / Resume</div>
-            <div class="dropdown-separator"></div>
-            <div class="dropdown-item" id="menu-clear">Clear</div>
+<div class="app">
+
+    <!-- MENU BAR -->
+    <div class="menu-bar">
+        <div class="menu-item">
+            File
+            <div class="dropdown">
+                <div class="dropdown-item" id="menu-load">Load ROM...</div>
+                <div class="dropdown-item" id="menu-reset">Reset</div>
+                <div class="dropdown-item" id="menu-pause">Pause / Resume</div>
+                <div class="dropdown-separator"></div>
+                <div class="dropdown-item" id="menu-clear">Clear</div>
+            </div>
         </div>
     </div>
+
+    <div class="header">
+        <h1>RustyBoi Emulator</h1>
+        <div class="description">
+            Game Boy emulator for programmatic control and AI experimentation.
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="gameboy-canvas"></canvas>
+        </div>
+
+        <div id="status" class="status">
+            No ROM loaded.
+        </div>
+
+        <div class="keyboard-hints">
+            <div><span class="key">Arrows/WASD</span> Move</div>
+            <div><span class="key">Z</span> A | <span class="key">X</span> B</div>
+            <div><span class="key">Enter</span> Start | <span class="key">Shift</span> Select</div>
+            <div><span class="key">P</span> Pause</div>
+        </div>
+    </div>
+
 </div>
 
-<div class="header">
-    <h1>RustyBoi Emulator</h1>
-    <div class="description">
-        Game Boy emulator designed for programmatic control and AI experimentation.
-    </div>
-</div>
-
-<div class="container">
-    <div class="canvas-wrapper">
-        <canvas id="gameboy-canvas"></canvas>
-    </div>
-
-    <div id="status" class="status">
-        No ROM loaded.
-    </div>
-
-    <div class="keyboard-hints">
-        <div><span class="key">Arrows/WASD</span> Move</div>
-        <div><span class="key">Z</span> A | <span class="key">X</span> B</div>
-        <div><span class="key">Enter</span> Start | <span class="key">Shift</span> Select</div>
-        <div><span class="key">P</span> Pause</div>
-    </div>
-</div>
-
-<!-- Hidden file input -->
 <input type="file" id="rom-input" accept=".gb,.gbc" style="display:none">
 
 <script type="module">
@@ -197,9 +215,8 @@ async function initApp() {
 }
 
 function setupEvents() {
-    document.getElementById("menu-load").onclick = () => {
+    document.getElementById("menu-load").onclick = () =>
         document.getElementById("rom-input").click();
-    };
 
     document.getElementById("menu-reset").onclick = () => {
         if (currentRom) {
